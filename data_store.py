@@ -36,9 +36,9 @@ class DataStore:
         output_path=".",
     ):
         # List of local paths containing data.  Will implicitly include the
-        # output_path as the last fallback.
+        # output_path as the first place to check.
         self.local_sources = local_sources
-        self.local_sources.append(output_path)
+        self.local_sources.insert(0, output_path)
         # List of functions which calculate a request from a given table.
         self.remote_sources = remote_sources
         self.output_path = output_path
