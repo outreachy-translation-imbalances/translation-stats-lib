@@ -2,6 +2,24 @@
 Encapsulates data I/O, generalizable to any type of storage backend.
 
 Currently focused on *where* to store the data and not its formatting.
+
+Defaults are to read and write to the local directory.
+
+Usage example which read and writes to /tmp, and falls back to pulling data
+from a public notebook.  Evaluation will have the side effect of saving the
+remote data to the local directory.
+
+>>> def notebook_url(table):
+...     return dict(url="https://public-paws.wmcloud.org/User:Adamw/Translation%20Imbalances/" + table + ".csv")
+>>> store = data_store.DataStore(remote_sources=[notebook_url], output_path="/tmp")
+>>> configure_global_store(store)
+
+>>> @cached("content_translation_stats")
+... def demo():
+...     return None
+
+>>> demo()[0]
+{'sourceLanguage': 'ady', 'targetLanguage': 'tr', 'status': 'draft', 'count': '1', 'translators': '1'}
 """
 
 import csv
