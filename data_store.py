@@ -7,21 +7,21 @@ Currently focused on *where* to store the data and not its formatting.
 import csv
 from functools import wraps
 import os.path
+import requests
+from typing import Callable, List
 
 
 def _filesystem_path(root, table):
     return os.path.join(root, table) + ".csv"
 
 
-def _read_csv(path) -> list[dict]:
-    print("reading path " + path)
+def _read_csv(path) -> List[dict]:
     with open(path) as f:
         reader = csv.DictReader(f)
         return [row for row in reader]
 
 
-def _write_csv(path, data: list[dict]):
-    print("writing to path " + path)
+def _write_csv(path, data: List[dict]):
     with open(path, "w") as f:
         writer = csv.DictWriter(f, fieldnames=data[0].keys())
         writer.writeheader()
@@ -29,19 +29,43 @@ def _write_csv(path, data: list[dict]):
 
 
 class DataStore:
-    def __init__(self, read_from=".", write_to=".") -> None:
-        # Data root directory
-        # TODO: Support a fallback list and URL
-        self.read_from = read_from
-        # Data root directory
-        self.write_to = write_to
+    def __init__(
+        self,
+        local_sources: List[str] = [],
+        remote_sources: List[Callable[[str], dict]] = [],
+        output_path=".",
+    ):
+        # List of local paths containing data.  Will implicitly include the
+        # output_path as the last fallback.
+        self.local_sources = local_sources
+        self.local_sources.append(output_path)
+        # List of functions which calculate a request from a given table.
+        self.remote_sources = remote_sources
+        self.output_path = output_path
 
-    def read(self, table) -> list[dict]:
-        return _read_csv(_filesystem_path(self.read_from, table))
+    def read(self, table) -> List[dict]:
+        for source in self.local_sources:
+            try:
+                return _read_csv(_filesystem_path(source, table))
+            except FileNotFoundError:
+                pass
+
+        for source in self.remote_sources:
+            result = requests.get(**source(table))
+            if result.status_code != 200:
+                continue
+
+            # Mirror raw data to the local directory.
+            path = _filesystem_path(self.output_path, table)
+            with open(path, "w") as f:
+                f.write(result.text)
+            return _read_csv(path)
+
+        raise FileNotFoundError("No source found for " + table)
 
     def write(self, table, data) -> None:
         # TODO: flexible formatting
-        _write_csv(_filesystem_path(self.write_to, table), data)
+        _write_csv(_filesystem_path(self.output_path, table), data)
 
 
 def cached(table):
