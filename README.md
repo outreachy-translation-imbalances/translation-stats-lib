@@ -3,15 +3,10 @@ research project.
 
 Module structure
 ===
-Each data source is managed by a dedicated python module.  For example, the
-[content translation stats](https://en.wikipedia.org/w/api.php?action=help&modules=query%2Bcontenttranslations)
-API corresponds to the `content_translation_stats.py` module.
-
-Functions which take more than a few seconds to execute should memoize their
-results to the filesystem using the `cached` decorator.
-
-Modules may provide a single, top-level accessor function for retrieving the
-information, or multiple functions for retrieving various views of the data.
+Each module is responsible for generating one or more data tables.  The library
+is designed for fast access, and not for continually-updated data.  This means
+that any function which takes more than a few seconds to execute should memoize
+its results to the filesystem using the `data_store.cached` decorator.
 
 Data structure
 ===
@@ -34,11 +29,13 @@ consuming code.  For example:
 ]
 ```
 
+Complex cell values such as lists should be serialized as JSON.
+
 Coding conventions
 ===
 Follow [PEP 8](https://peps.python.org/pep-0008/), especially prefixing any
-private methods with an underscore so that they don't become part of the public
-interface.  We'll include a linter to standardize formatting.
+private methods with an underscore so that they don't accidentally become part
+of the public interface.  We'll include a linter to standardize formatting.
 
 Include unit tests for any non-trivial functions.
 
