@@ -1,3 +1,44 @@
+This repository contains shared modules which will be used for the [translation imbalances](https://meta.wikimedia.org/wiki/Research:Content_Translation_language_imbalances)
+research project.
+
+Module structure
+===
+Each module is responsible for generating one or more data tables.  The library
+is designed for fast access, and not for continually-updated data.  This means
+that any function which takes more than a few seconds to execute should memoize
+its results to the filesystem using the `data_store.cached` decorator.
+
+Data structure
+===
+Data is persisted as CSV or newline-delimited JSON, via the `cached` module.
+
+Data returned by public functions can be a list or dict.  Each row can be a
+simple value or a dict, but not a tuple.  This way the data has clear semantics,
+and changing the structure will result in no change or simple changes to
+consuming code.  For example:
+
+```python
+# Returns simple values
+>>> get_valid_languages()
+["aa", "af", ...]
+
+# Returns structured data
+>>> get_users_with_language_proficiencies()
+[
+	{"user": "Aardvark", "proficiencies": ["aa-1", "af-N"]}
+]
+```
+
+Complex cell values such as lists should be serialized as JSON.
+
+Coding conventions
+===
+Follow [PEP 8](https://peps.python.org/pep-0008/), especially prefixing any
+private methods with an underscore so that they don't accidentally become part
+of the public interface.  We'll include a linter to standardize formatting.
+
+Include unit tests for any non-trivial functions.
+
 Installing dependencies
 ===
 ```
