@@ -39,14 +39,28 @@ of the public interface.  We'll include a linter to standardize formatting.
 
 Include unit tests for any non-trivial functions.
 
-Installing dependencies
+Installing
 ===
+For a runtime environment, install the package like
+
 ```
-pip install -r requirements.txt
+pip install -e .
+```
+
+In order to get the test and lint packages, install like
+
+```
+pip install -e .[lint,test]
 ```
 
 Running tests
 ===
 ```
 pytest
+```
+
+Running the code formatter
+===
+```
+black .
 ```

@@ -21,7 +21,7 @@ Wrap the aggregate statistics returned by the contenttranslationstats API.
 ]
 """
 from collections import defaultdict
-from data_store import cached
+from .data_store import cached
 import requests
 
 

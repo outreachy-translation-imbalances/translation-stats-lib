@@ -11,7 +11,7 @@ URL for constructing API requests.
 	...
 ]
 """
-from data_store import cached
+from .data_store import cached
 import requests
 
 

@@ -1,4 +1,4 @@
-import data_store
+from translation_stats import data_store
 from tempfile import TemporaryDirectory
 from unittest import mock
 
@@ -46,5 +46,7 @@ def test_remote():
         def read():
             return None
 
-        with mock.patch("data_store.requests.get", side_effect=mocked_requests_get):
+        with mock.patch(
+            "translation_stats.data_store.requests.get", side_effect=mocked_requests_get
+        ):
             assert read() == [{"e": "5", "f": "6"}]
