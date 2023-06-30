@@ -1,21 +1,43 @@
-This repository contains shared modules which will be used for the [translation imbalances](https://meta.wikimedia.org/wiki/Research:Content_Translation_language_imbalances)
+This repository contains shared library modules which will be used for the
+[translation imbalances](https://meta.wikimedia.org/wiki/Research:Content_Translation_language_imbalances)
 research project.
 
 Module structure
 ===
 Each module is responsible for generating one or more data tables.  The library
-is designed for fast access, and not for continually-updated data.  This means
-that any function which takes more than a few seconds to execute should memoize
-its results to the filesystem using the `data_store.cached` decorator.
+is designed for fast access of static data, and not for continually-updated data.
+
+Data memoization
+===
+Some getter accessors will memoize results as CSV files, using the
+`data_store.cached` decorator.  The criteria to decide when a function should be
+memoized are roughly,
+* Is this output expensive to calculate, taking more than 1 second of network
+or processing?
+* Will an external tool be reading this output, which can more conveniently read
+from a file rather than calling a python function directly?
+
+Configuration
+===
+The default data source should be explicitly configured before using the
+library.  A simple configuration can read from and write to a separate data
+repository:
+
+```python
+import data_store
+data_store.configure_global_store(
+    data_store.DataStore(output_path="/home/USER/translation-stats-data")
+)
+```
 
 Data structure
 ===
-Data is persisted as CSV or newline-delimited JSON, via the `cached` module.
-
 Data returned by public functions can be a list or dict.  Each row can be a
 simple value or a dict, but not a tuple.  This way the data has clear semantics,
 and changing the structure will result in no change or simple changes to
-consuming code.  For example:
+consuming code.  If the data will be memoized, it must be a list of dicts.
+
+Example output structures:
 
 ```python
 # Returns simple values
