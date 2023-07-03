@@ -13,9 +13,9 @@ so-called "content" pages, so excluding talk pages) and active editor count.
 ]
 """
 
-from data_store import cached
+from .data_store import cached
 import requests
-from wikipedia_site_matrix import get_wikipedias
+from .wikipedia_site_matrix import get_wikipedias
 
 
 @cached("wikipedia_statistics")

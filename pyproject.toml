@@ -1,0 +1,24 @@
+packages = [
+    { includes = 'translation_stats' },
+]
+
+[project]
+authors = [
+	{ name = 'Abhishek Bhardwaj' },
+	{ name = 'Nathaly Toledo' },
+	{ name = 'Adam Wight' },
+]
+dependencies = [
+	'requests',
+]
+license = { file = 'LICENSE' }
+name = 'translation_stats_lib'
+version = '0.0.1'
+
+[project.optional-dependencies]
+lint = [
+	'black',
+]
+test = [
+	'pytest',
+]
