@@ -82,7 +82,6 @@ class DataStore:
         raise FileNotFoundError("No source found for " + table)
 
     def write(self, table, data) -> None:
-        # TODO: flexible formatting
         _write_csv(_filesystem_path(self.output_path, table), data)
 
 
@@ -90,21 +89,27 @@ def cached(table):
     """
     Decorator memoizes results to the filesystem.
 
-    Usage:
+    Without parameters:
         @cached("table_name")
         def calculate_expensive(): ...
+
+    With parameters:
+        @cached("{wiki}_table_name")
+        def calculate_expensive(*, wiki): ...
     """
 
     def decorated(func):
         @wraps(func)
-        def wrapped_calculation():
+        def wrapped_calculation(*args, **kwargs):
+            filename = table.format(*args, **kwargs)
+
             try:
-                return _global_store.read(table)
+                return _global_store.read(filename)
 
             except FileNotFoundError:
-                data = func()
+                data = func(*args, **kwargs)
 
-                _global_store.write(table, data)
+                _global_store.write(filename, data)
                 return data
 
         return wrapped_calculation
