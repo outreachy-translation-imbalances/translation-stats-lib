@@ -82,6 +82,7 @@ class DataStore:
         raise FileNotFoundError("No source found for " + table)
 
     def write(self, table, data) -> None:
+        os.makedirs(self.output_path, exist_ok=True)
         _write_csv(_filesystem_path(self.output_path, table), data)
 
 
