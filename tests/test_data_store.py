@@ -23,7 +23,7 @@ def test_cached():
         assert data == read()
 
 
-def test_templated():
+def test_parameters():
     mock_store = mock.Mock()
     mock_store.read = mock.Mock(side_effect=FileNotFoundError)
     mock_store.write = mock.Mock()
@@ -31,6 +31,7 @@ def test_templated():
 
     @data_store.cached("{foo}_table")
     def create(foo=None):
+        assert foo == "bar"
         return []
 
     create(foo="bar")
