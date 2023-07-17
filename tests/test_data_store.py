@@ -23,6 +23,22 @@ def test_cached():
         assert data == read()
 
 
+def test_parameters():
+    mock_store = mock.Mock()
+    mock_store.read = mock.Mock(side_effect=FileNotFoundError)
+    mock_store.write = mock.Mock()
+    data_store.configure_global_store(mock_store)
+
+    @data_store.cached("{foo}_table")
+    def create(foo=None):
+        assert foo == "bar"
+        return []
+
+    create(foo="bar")
+
+    mock_store.read.assert_called_once_with("bar_table")
+
+
 def test_remote():
     with TemporaryDirectory() as tmpdir:
 
