@@ -54,6 +54,7 @@ def parse_babel_templates(content, allowed_languages, dbname):
             language_claims.extend(valid_user_languages)
     return language_claims
 
+
 def find_babel_languages(title, allowed_languages, url, dbname):
     modified_url = url + "/w/index.php"
     params = {
@@ -65,6 +66,7 @@ def find_babel_languages(title, allowed_languages, url, dbname):
         language_claims = parse_babel_templates(content, allowed_languages, dbname)
         return title, language_claims
     return title, []
+
 
 def create_user_language_csv(csv_file, output_file, allowed_languages, url, dbname):
     titles = get_user_titles_with_babel_from_csv(csv_file)
@@ -83,13 +85,12 @@ def create_user_language_csv(csv_file, output_file, allowed_languages, url, dbna
 
 
 def generate_csv_files():
-    
     language_codes = []
     dbnames = []
     urls = []
-    
+
     language_data = "/home/paws/translation-stats-data/language_data.csv"
-    
+
     with open(language_data, 'r') as file:
         reader = csv.DictReader(file)
         for row in reader:
@@ -105,7 +106,6 @@ def generate_csv_files():
             version = f"{code}-{i}"
             allowed_languages.append(version)
 
-    
     for url, language_code, dbname in zip(urls, language_codes, dbnames):
         csv_file = f"/home/paws/translation-stats-data/translator_usernames/{dbname}_usernames.csv"
         output_file = f"/home/paws/translation-stats-data/translator_language_proficiency_misc_babel/{dbname}_translator_proficiency_misc_babel.csv"

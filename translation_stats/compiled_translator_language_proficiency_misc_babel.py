@@ -3,6 +3,7 @@ import csv
 import pymysql
 import re
 import json
+from .data_store import cached
 
 
 def get_user_titles_with_babel_from_csv(csv_file):
@@ -68,20 +69,25 @@ def find_babel_languages(title, allowed_languages, url, dbname):
     return title, []
 
 
-def create_user_language_csv(csv_file, output_file, allowed_languages, url, dbname):
-    titles = get_user_titles_with_babel_from_csv(csv_file)
-    results = [find_babel_languages(title, allowed_languages, url, dbname) for title in titles]
-    filtered_results = [(title, languages) for title, languages in results if languages]
+@cached("/home/paws/translation-stats-data/translator_language_proficiency_misc_babel_new")
+def process_data_and_create_csv(allowed_languages, urls, dbnames):
+    csv_data = []
+    for url, dbname in zip(urls, dbnames):
+        csv_file = f"/home/paws/translation-stats-data/translator_usernames/{dbname}_usernames.csv"
 
-    with open(output_file, 'w', encoding='utf-8', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerow(["username", "language"])
+        try:
+            titles = get_user_titles_with_babel_from_csv(csv_file)
+            results = [find_babel_languages(title, allowed_languages, url, dbname) for title in titles]
+            filtered_results = [(title, languages) for title, languages in results if languages]
 
-        for title, languages in filtered_results:
-            language_string = json.dumps(languages, separators=(',', ':'))
-            writer.writerow([title, language_string])
+            for title, languages in filtered_results:
+                language_string = json.dumps(languages, separators=(',', ':'))
+                # writer.writerow([title, language_string])
+                csv_data.append({"username": title, "language": language_string, "wikipedia": dbname})
 
-    print("CSV file created successfully:", output_file)
+        except FileNotFoundError:
+            print(f"Username file not found for {dbname}")
+    return csv_data
 
 
 def generate_csv_files():
@@ -106,11 +112,5 @@ def generate_csv_files():
             version = f"{code}-{i}"
             allowed_languages.append(version)
 
-    for url, language_code, dbname in zip(urls, language_codes, dbnames):
-        csv_file = f"/home/paws/translation-stats-data/translator_usernames/{dbname}_usernames.csv"
-        output_file = f"/home/paws/translation-stats-data/translator_language_proficiency_misc_babel/{dbname}_translator_proficiency_misc_babel.csv"
+    process_data_and_create_csv(allowed_languages, urls, dbnames)
 
-        try:
-            create_user_language_csv(csv_file, output_file, allowed_languages, url, dbname)
-        except FileNotFoundError:
-            print(f"Username file not found for {dbname}")
