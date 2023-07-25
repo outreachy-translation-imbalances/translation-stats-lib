@@ -40,10 +40,14 @@ def _read_csv(path) -> List[dict]:
 
 
 def _write_csv(path, data: List[dict]):
-    with open(path, "w") as f:
-        writer = csv.DictWriter(f, fieldnames=data[0].keys())
-        writer.writeheader()
-        writer.writerows(data)
+    if data:
+        with open(path, "w") as f:
+            writer = csv.DictWriter(f, fieldnames=data[0].keys())
+            writer.writeheader()
+            writer.writerows(data)
+        print("csv generated successfully at:", path)
+    else:
+        print("No data to write to the CSV file.")
 
 
 class DataStore:
