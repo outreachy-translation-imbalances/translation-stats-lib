@@ -2,7 +2,15 @@
 Connect to a Wikimedia database replica on PAWS
 """
 import pymysql
+from pymysql.constants import FIELD_TYPE
 import socket
+
+
+def _decode_binary(value):
+    if isinstance(value, bytes):
+        return value.decode()
+    else:
+        return value
 
 
 def _make_connection(wiki, replica_type="analytics"):
@@ -10,12 +18,18 @@ def _make_connection(wiki, replica_type="analytics"):
     
     `replica_type` can be either "analytics" (default), or "web"."""
     assert replica_type == "web" or replica_type == "analytics"
+
+    conv = pymysql.converters.conversions
+    conv[FIELD_TYPE.BLOB] = conv[FIELD_TYPE.TINY_BLOB] = conv[FIELD_TYPE.MEDIUM_BLOB] = conv[FIELD_TYPE.LONG_BLOB] = \
+        conv[FIELD_TYPE.STRING] = conv[FIELD_TYPE.VAR_STRING] = _decode_binary
+
     try:
         return pymysql.connect(
             host=f"{wiki}.{replica_type}.db.svc.wikimedia.cloud",
             read_default_file="~/.my.cnf",
             database=f"{wiki}_p",
             charset='utf8',
+            conv=conv,
             cursorclass=pymysql.cursors.DictCursor
         )
     except socket.gaierror as e:
