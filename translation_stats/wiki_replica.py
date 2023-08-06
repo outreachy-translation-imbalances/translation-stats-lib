@@ -15,7 +15,8 @@ def _make_connection(wiki, replica_type="analytics"):
             host=f"{wiki}.{replica_type}.db.svc.wikimedia.cloud",
             read_default_file="~/.my.cnf",
             database=f"{wiki}_p",
-            charset='utf8'
+            charset='utf8',
+            cursorclass=pymysql.cursors.DictCursor
         )
     except socket.gaierror as e:
         error_msg = f"Hostname resolution failed: {e}"

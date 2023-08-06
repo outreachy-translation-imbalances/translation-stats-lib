@@ -2,10 +2,10 @@ from .data_store import cached
 from .wiki_replica import query
 from .wikipedia_site_matrix import get_wikipedias
 
-@cached("translator_usernames/{database_name}_usernames")
-def fetch_usernames(*, database_name):
+@cached("translator_usernames/{wiki}_usernames")
+def fetch_usernames(*, wiki):
     results = query(
-        database_name,
+        wiki,
         """
         SELECT
             DISTINCT r.rev_actor AS userid,
@@ -18,11 +18,11 @@ def fetch_usernames(*, database_name):
         """
     )
 
-    print(f"Number of rows in results for {database_name}: {len(results)}")
+    print(f"Number of rows in results for {wiki}: {len(results)}")
 
     return results
 
 
 def generate_csv_files():
     for database_name in get_wikipedias():
-        fetch_usernames(database_name)
+        fetch_usernames(wiki=database_name)
