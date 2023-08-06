@@ -45,3 +45,16 @@ def get_wikipedias():
                     })
 
     return sites
+
+
+def get_allowed_babel_languages():
+    languages = [site["language"] for site in get_wikipedias()]
+    allowed_languages = []
+    for code in languages:
+        allowed_languages.append(code)
+        allowed_languages.append(f"{code}-N")
+        for i in range(6):
+            version = f"{code}-{i}"
+            allowed_languages.append(version)
+
+    return allowed_languages
