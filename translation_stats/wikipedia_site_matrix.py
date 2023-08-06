@@ -26,7 +26,7 @@ def get_wikipedias():
             "format": "json",
             "formatversion": 2,
             "smlangprop": "code|site",
-            "smsiteprop": "dbname|url",
+            "smsiteprop": "code|dbname|url",
             "smtype": "language",
         },
     ).json()["sitematrix"]
