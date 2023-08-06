@@ -42,10 +42,16 @@ def fetch_babel_data(database):
         conn = make_connection(database)
         results = query(
             conn,
-            """ SELECT Distinct a.actor_name AS username, b.babel_lang as language_used, b.babel_level as language_level 
-            From actor a LEFT JOIN babel b ON b.babel_user = a.actor_user 
-            where b.babel_user is not null 
-            order by a.actor_name ;"""
+            """
+            SELECT
+                DISTINCT a.actor_name AS username,
+                b.babel_lang as language_used,
+                b.babel_level as language_level
+            FROM actor a
+            LEFT JOIN babel b ON b.babel_user = a.actor_user
+            WHERE b.babel_user is not null
+            ORDER BY a.actor_name
+            """
         )
         conn.close()
         return results

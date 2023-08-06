@@ -32,7 +32,16 @@ def fetch_usernames(dbnames):
             conn = make_connection(database_name)
             results = query(
                 conn,
-                "SELECT DISTINCT r.rev_actor AS userid, a.actor_name AS username FROM revision r JOIN change_tag ct ON r.rev_id = ct.ct_rev_id JOIN change_tag_def ctd ON ct.ct_tag_id = ctd.ctd_id AND ctd.ctd_name = 'contenttranslation' LEFT JOIN actor a ON r.rev_actor = a.actor_id"
+                """
+                SELECT
+                    DISTINCT r.rev_actor AS userid,
+                    a.actor_name AS username
+                FROM revision r
+                JOIN change_tag ct ON r.rev_id = ct.ct_rev_id
+                JOIN change_tag_def ctd ON ct.ct_tag_id = ctd.ctd_id
+                    AND ctd.ctd_name = 'contenttranslation'
+                LEFT JOIN actor a ON r.rev_actor = a.actor_id
+                """
             )
 
             print(f"Number of rows in results for {database_name}: {len(results)}")
