@@ -1,26 +1,5 @@
-import pymysql
 import csv
-
-
-def make_connection(wiki, replica_type="analytics"):
-    """Connects to a host and database of the same name.
-    
-    `replica_type` can be either "analytics" (default) or "web"."""
-    assert replica_type == "web" or replica_type == "analytics"
-    return pymysql.connect(
-        host=f"{wiki}.{replica_type}.db.svc.wikimedia.cloud",
-        read_default_file="~/.my.cnf",
-        database=f"{wiki}_p",
-        charset='utf8'
-    )
-
-
-def query(conn, query):
-    """Execute a SQL query against the connection and return **all** the results."""
-    with conn.cursor() as cur:
-        cur.execute(query)
-        data = cur.fetchall()
-        return data
+from .wiki_replica import query
 
 
 def extract_db_names(file_path):
@@ -35,9 +14,8 @@ def extract_db_names(file_path):
 
 def process_database(wiki):
     try:
-        conn = make_connection(wiki)
         results = query(
-            conn,
+            wiki,
             """
             SELECT
                 r.rev_id as revision_id,
@@ -52,7 +30,6 @@ def process_database(wiki):
             LEFT JOIN comment c ON r.rev_comment_id = c.comment_id
             """
         )
-        conn.close()
 
         revision_ids = []
         usernames = []
@@ -83,10 +60,6 @@ def process_database(wiki):
             comments.append(comment)
 
         return revision_ids, usernames, revision_timestamps, source_wikis, target_wikis, comments
-
-    except pymysql.OperationalError as e:
-        print(f"Error occurred while connecting to the database: {e}")
-        return [], [], [], [], [], []
 
 
 def save_to_csv(file_path, revision_ids, usernames, revision_timestamps, source_wikis, target_wikis, comments):
