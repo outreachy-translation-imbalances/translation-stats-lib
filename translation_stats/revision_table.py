@@ -38,7 +38,19 @@ def process_database(wiki):
         conn = make_connection(wiki)
         results = query(
             conn,
-            "SELECT r.rev_id as revision_id, a.actor_name AS username, r.rev_timestamp as revision_timestamp, c.comment_text as comment FROM revision r JOIN change_tag ct ON r.rev_id = ct.ct_rev_id JOIN change_tag_def ctd ON ct.ct_tag_id = ctd.ctd_id AND ctd.ctd_name = 'contenttranslation' LEFT JOIN actor a ON r.rev_actor = a.actor_id LEFT JOIN comment c ON r.rev_comment_id = c.comment_id;"
+            """
+            SELECT
+                r.rev_id as revision_id,
+                a.actor_name AS username,
+                r.rev_timestamp as revision_timestamp,
+                c.comment_text as comment
+            FROM revision r
+            JOIN change_tag ct ON r.rev_id = ct.ct_rev_id
+            JOIN change_tag_def ctd ON ct.ct_tag_id = ctd.ctd_id
+                AND ctd.ctd_name = 'contenttranslation'
+            LEFT JOIN actor a ON r.rev_actor = a.actor_id
+            LEFT JOIN comment c ON r.rev_comment_id = c.comment_id
+            """
         )
         conn.close()
 
