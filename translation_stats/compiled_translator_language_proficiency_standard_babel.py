@@ -41,13 +41,17 @@ def fetch_babel_data(database):
         results = query(
             conn,
             """
-            SELECT Distinct a.actor_name AS username, b.babel_lang as language_used, b.babel_level as language_level 
-            FROM revision r JOIN change_tag ct ON r.rev_id = ct.ct_rev_id 
-            JOIN change_tag_def ctd ON ct.ct_tag_id = ctd.ctd_id AND ctd.ctd_name = 'contenttranslation' 
-            LEFT JOIN actor a ON r.rev_actor = a.actor_id 
-            LEFT JOIN babel b ON b.babel_user = a.actor_user 
-            WHERE b.babel_user IS NOT NULL 
-            ORDER BY a.actor_name ;
+            SELECT
+                DISTINCT a.actor_name AS username,
+                b.babel_lang as language_used,
+                b.babel_level as language_level
+            FROM revision r
+            JOIN change_tag ct ON r.rev_id = ct.ct_rev_id
+            JOIN change_tag_def ctd ON ct.ct_tag_id = ctd.ctd_id AND ctd.ctd_name = 'contenttranslation'
+            LEFT JOIN actor a ON r.rev_actor = a.actor_id
+            LEFT JOIN babel b ON b.babel_user = a.actor_user
+            WHERE b.babel_user IS NOT NULL
+            ORDER BY a.actor_name
             """
         )
         conn.close()
