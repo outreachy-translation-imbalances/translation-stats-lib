@@ -1,8 +1,5 @@
-import requests
 import csv
 import pymysql
-import re
-import json
 
 
 def make_connection(wiki, replica_type="analytics"):

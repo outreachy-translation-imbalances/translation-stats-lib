@@ -1,6 +1,5 @@
 import requests
 import csv
-import pymysql
 import re
 import json
 
