@@ -24,6 +24,7 @@ remote data to the local directory.
 
 import csv
 from functools import wraps
+import os
 import os.path
 import requests
 from typing import Callable, List
@@ -107,6 +108,7 @@ def cached(table):
         @wraps(func)
         def wrapped_calculation(*args, **kwargs):
             filename = table.format(*args, **kwargs)
+            os.makedirs(os.path.dirname(os.path.abspath(filename)), exist_ok=True)
 
             try:
                 return _global_store.read(filename)
