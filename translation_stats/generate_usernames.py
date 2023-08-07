@@ -1,53 +1,32 @@
-import csv
+from .data_store import cached
 from .wiki_replica import query
+from .wikipedia_site_matrix import get_wikipedias
+
+@cached("translator_usernames/{wiki}_usernames")
+def fetch_usernames(*, wiki):
+    results = query(
+        wiki,
+        """
+        SELECT
+            DISTINCT r.rev_actor AS userid,
+            a.actor_name AS username
+        FROM revision r
+        JOIN change_tag ct ON r.rev_id = ct.ct_rev_id
+        JOIN change_tag_def ctd ON ct.ct_tag_id = ctd.ctd_id
+            AND ctd.ctd_name = 'contenttranslation'
+        LEFT JOIN actor a ON r.rev_actor = a.actor_id
+        """
+    )
+
+    print(f"Number of rows in results for {wiki}: {len(results)}")
+
+    return results
 
 
-def fetch_usernames(dbnames):
-    for database_name in dbnames:
-        results = query(
-            database_name,
-            """
-            SELECT
-                DISTINCT r.rev_actor AS userid,
-                a.actor_name AS username
-            FROM revision r
-            JOIN change_tag ct ON r.rev_id = ct.ct_rev_id
-            JOIN change_tag_def ctd ON ct.ct_tag_id = ctd.ctd_id
-                AND ctd.ctd_name = 'contenttranslation'
-            LEFT JOIN actor a ON r.rev_actor = a.actor_id
-            """
-        )
+def get_userpage_titles(wiki):
+    return ["User:" + row['username'] for row in fetch_usernames(wiki=wiki)]
 
-        print(f"Number of rows in results for {database_name}: {len(results)}")
 
-        user_ids = []
-        usernames = []
-
-        for result in results:
-            user_ids.append(result[0])
-            usernames.append(result[1].decode("utf-8"))
-
-        with open(f'/home/paws/translation-stats-data/translator_usernames/{database_name}_usernames.csv', 'w', newline='', encoding='utf-8') as csvfile:
-            writer = csv.writer(csvfile)
-            writer.writerow(['User ID', 'Username'])
-
-            if len(user_ids) == 0:
-                print("No results found.")
-            else:
-                for i in range(len(user_ids)):
-                    writer.writerow([user_ids[i], usernames[i]])
-
-        print(f"CSV file for {database_name} generated successfully.")
-
-            
 def generate_csv_files():
-    dbnames = []
-    
-    language_data = "/home/paws/translation-stats-data/language_data.csv"
-    
-    with open(language_data, 'r') as file:
-        reader = csv.DictReader(file)
-        for row in reader:
-            dbnames.append(row['DB Name'])
-            
-    fetch_usernames(dbnames)
+    for database_name in get_wikipedias():
+        fetch_usernames(wiki=database_name)

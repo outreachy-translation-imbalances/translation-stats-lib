@@ -1,7 +1,7 @@
-import csv
-import os
 from .data_store import cached
 from .wiki_replica import query
+from .generate_usernames import fetch_usernames
+from . import wikipedia_site_matrix
 
 
 def fetch_babel_data(database):
@@ -20,12 +20,14 @@ def fetch_babel_data(database):
     )
 
 
-def format_language_proficiency(results, allowed_languages):
+
+def format_language_proficiency(results):
+    allowed_languages = wikipedia_site_matrix.get_allowed_babel_languages()
     merged_rows = {}
-    for result in results:
-        username = result[0].decode('utf-8')
-        language = result[1].decode('utf-8')
-        proficiency = result[2].decode('utf-8')
+    for row in results:
+        username = row['username']
+        language = row['language_used']
+        proficiency = row['language_level']
         if language in allowed_languages:
             if username not in merged_rows:
                 merged_rows[username] = [(language, proficiency)]
@@ -36,54 +38,43 @@ def format_language_proficiency(results, allowed_languages):
     for username, language in merged_rows.items():
         formatted_username = f"{username}"
         formatted_languages = ", ".join([f"{lang}-{prof}" for lang, prof in language])
-        output_rows.append({'Username': formatted_username, 'Language-Proficiency': formatted_languages})
+        output_rows.append({
+            'username': formatted_username,
+            'language_proficiency': formatted_languages
+        })
 
     return output_rows
 
 
-@cached("/home/paws/translation-stats-data/metawiki_translator_language_proficiency_standard_babel")
-def match_usernames(babel_data, usernames_folder):
+@cached("metawiki_translator_language_proficiency_standard_babel")
+def match_usernames(babel_data):
     # Load the usernames and languages from babel_data
     metawiki_usernames = set()
     metawiki_usernames_languages = {}
     for row in babel_data:
-        username = row['Username']
-        language = row['Language-Proficiency']
+        username = row['username']
+        language = row['language_proficiency']
         metawiki_usernames.add(username)
         metawiki_usernames_languages[username] = language
 
-    # Iterate through the CSV files in the translator_usernames folder
+    sites = wikipedia_site_matrix.get_wikipedias()
     matched_rows = []
-    for filename in os.listdir(usernames_folder):
-        if filename.endswith('.csv'):
-            filepath = os.path.join(usernames_folder, filename)
-            with open(filepath, 'r', encoding='utf-8') as username_file:
-                username_reader = csv.DictReader(username_file)
-                for row in username_reader:
-                    username = row['Username']
-                    if username in metawiki_usernames:
-                        language = metawiki_usernames_languages[username]
-                        matched_rows.append({'Username': username, 'Language-Proficiency': language, 'Wikipedia Version': "metawiki"})
-                        
+    for site in sites:
+        users = fetch_usernames(wiki=site['dbname'])
+        for user in users:
+            username = user['username']
+            if username in metawiki_usernames:
+                language = metawiki_usernames_languages[username]
+                matched_rows.append({
+                    'username': username,
+                    'language_proficiency': language,
+                    'wiki': "metawiki"
+                })
+
     return matched_rows
 
 
 def generate_csv_files():
-    # Read the database names from the language_data.csv file
-    dbnames = ['metawiki']
-    allowed_languages = []
-    with open('/home/paws/translation-stats-data/language_data.csv', 'r', encoding='utf-8') as file:
-        reader = csv.DictReader(file)
-        for row in reader:
-            allowed_languages.append(row['Language Code'])
-
-    babel_data = []
-    for database in dbnames:
-        results = fetch_babel_data(database)
-        formatted_results = format_language_proficiency(results, allowed_languages)
-        babel_data.extend(formatted_results)
-
-    # Specify the paths
-    usernames_folder = '/home/paws/translation-stats-data/translator_usernames'
-    # Call the function to match and copy the usernames and languages
-    match_usernames(babel_data, usernames_folder)
+    results = fetch_babel_data('metawiki')
+    formatted_results = format_language_proficiency(results)
+    match_usernames(formatted_results)
