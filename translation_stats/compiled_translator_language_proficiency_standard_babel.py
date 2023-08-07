@@ -1,6 +1,6 @@
 from .data_store import cached
 from .wiki_replica import query
-from .wikipedia_site_matrix import get_allowed_babel_languages
+from .wikipedia_site_matrix import get_languages
 
 
 def fetch_babel_data(database):
@@ -25,7 +25,7 @@ def fetch_babel_data(database):
 
 @cached("translator_language_proficiency_standard_babel_new")
 def format_language_proficiency(dbnames):
-    allowed_languages = get_allowed_babel_languages()
+    allowed_languages = get_languages()
     all_data = []
 
     for database in dbnames:

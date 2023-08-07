@@ -22,7 +22,7 @@ def fetch_babel_data(database):
 
 
 def format_language_proficiency(results):
-    allowed_languages = wikipedia_site_matrix.get_allowed_babel_languages()
+    allowed_languages = wikipedia_site_matrix.get_languages()
     merged_rows = {}
     for row in results:
         username = row['username']

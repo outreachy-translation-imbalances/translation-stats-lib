@@ -3,7 +3,7 @@ import re
 import json
 from .data_store import cached
 from .generate_usernames import get_userpage_titles
-from .wikipedia_site_matrix import get_allowed_babel_languages
+from .wikipedia_site_matrix import get_allowed_babel_language_proficiencies
 
 
 def extract_language_codes(template_text):
@@ -30,7 +30,7 @@ def fetch_content(url, params):
 
 
 def parse_babel_templates(content):
-    allowed_languages = get_allowed_babel_languages()
+    allowed_language_proficiencies = get_allowed_babel_language_proficiencies()
     babel_templates = re.findall(r"\{\{Babel((?:(?!\{\{Babel)[^{}])+)\}\}", content, re.IGNORECASE)
     language_claims = []
     if babel_templates:
@@ -41,7 +41,7 @@ def parse_babel_templates(content):
             for lang in user_languages:
                 lang = lang.strip()
                 lang = lang.rstrip('\n')
-                if lang in allowed_languages:
+                if lang in allowed_language_proficiencies:
                     valid_user_languages.add(lang)
             language_claims.extend(valid_user_languages)
     return language_claims
