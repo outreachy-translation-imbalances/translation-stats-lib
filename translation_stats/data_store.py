@@ -24,13 +24,14 @@ remote data to the local directory.
 
 import csv
 from functools import wraps
+import os
 import os.path
 import requests
 from typing import Callable, List
 
 
 def _filesystem_path(root, table):
-    return os.path.join(root, table) + ".csv"
+    return os.path.abspath(os.path.join(root, table) + ".csv")
 
 
 def _read_csv(path) -> List[dict]:
@@ -86,8 +87,9 @@ class DataStore:
         raise FileNotFoundError("No source found for " + table)
 
     def write(self, table, data) -> None:
-        os.makedirs(self.output_path, exist_ok=True)
-        _write_csv(_filesystem_path(self.output_path, table), data)
+        path = _filesystem_path(self.output_path, table)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        _write_csv(path, data)
 
 
 def cached(table):
