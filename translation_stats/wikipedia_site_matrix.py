@@ -5,6 +5,7 @@ URL for constructing API requests.
 >>> get_wikipedias()
 [
 	{
+        "dbname": "yowiki",
         "language": "yo",
         "url": "https://yo.wikipedia.org"
 	},
@@ -25,7 +26,7 @@ def get_wikipedias():
             "format": "json",
             "formatversion": 2,
             "smlangprop": "code|site",
-            "smsiteprop": "code|url",
+            "smsiteprop": "code|dbname|url",
             "smtype": "language",
         },
     ).json()["sitematrix"]
@@ -37,6 +38,12 @@ def get_wikipedias():
         if "site" in group:
             for site in group["site"]:
                 if site["code"] == "wiki" and "closed" not in site:
-                    sites.append({"language": group["code"], "url": site["url"]})
+                    sites.append(
+                        {
+                            "dbname": site["dbname"],
+                            "language": group["code"],
+                            "url": site["url"],
+                        }
+                    )
 
     return sites
