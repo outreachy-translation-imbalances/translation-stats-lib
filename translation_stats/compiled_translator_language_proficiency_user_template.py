@@ -3,7 +3,7 @@ import re
 import json
 from .data_store import cached
 from . import generate_usernames
-from . import wikipedia_site_matrix
+from .wikipedia_site_matrix import get_allowed_babel_languages
 
 
 def extract_language_codes(template_text):
@@ -64,7 +64,7 @@ def find_babel_languages(title, allowed_languages, url, dbname):
 
 @cached("translator_language_proficiency_user_template_new")
 def process_data_and_create_csv(sites):
-    allowed_languages = wikipedia_site_matrix.get_allowed_babel_languages()
+    allowed_languages = get_allowed_babel_languages()
     data = []
     for site in sites:
         titles = generate_usernames.get_userpage_titles(site["dbname"])
@@ -80,7 +80,3 @@ def process_data_and_create_csv(sites):
             })
 
     return data
-
-
-def generate_csv_files():
-    process_data_and_create_csv(wikipedia_site_matrix.get_wikipedias())

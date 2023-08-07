@@ -1,6 +1,6 @@
 from .data_store import cached
 from .wiki_replica import query
-from . import wikipedia_site_matrix
+from .wikipedia_site_matrix import get_allowed_babel_languages
 
 
 def fetch_babel_data(database):
@@ -23,10 +23,9 @@ def fetch_babel_data(database):
     return results
 
 
-
 @cached("translator_language_proficiency_standard_babel_new")
 def format_language_proficiency(dbnames):
-    allowed_languages = wikipedia_site_matrix.get_allowed_babel_languages()
+    allowed_languages = get_allowed_babel_languages()
     all_data = []
 
     for database in dbnames:
@@ -57,10 +56,3 @@ def format_language_proficiency(dbnames):
             })
 
     return all_data
-
-
-def generate_csv_files():
-    sites = wikipedia_site_matrix.get_wikipedias()
-    format_language_proficiency([site['dbname'] for site in sites])
-
-    print("Combined CSV file saved")

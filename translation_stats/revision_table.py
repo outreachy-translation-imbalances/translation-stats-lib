@@ -1,6 +1,5 @@
 from .data_store import cached
 from .wiki_replica import query
-from .wikipedia_site_matrix import get_wikipedias
 
 
 @cached("revision_table/{dbname}_revision_table")
@@ -38,10 +37,3 @@ def process_database(*, dbname):
         data.append(row)
 
     return data
-
-
-def generate_csv_files():
-    db_names = [site['dbname'] for site in get_wikipedias()]
-
-    for db_name in db_names:
-        process_database(dbname=db_name)

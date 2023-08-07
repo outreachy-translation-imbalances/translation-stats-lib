@@ -3,7 +3,7 @@ import re
 import json
 from .data_store import cached
 from .generate_usernames import get_userpage_titles
-from . import wikipedia_site_matrix
+from .wikipedia_site_matrix import get_allowed_babel_languages
 
 
 def extract_language_codes(template_text):
@@ -30,7 +30,7 @@ def fetch_content(url, params):
 
 
 def parse_babel_templates(content):
-    allowed_languages = wikipedia_site_matrix.get_allowed_babel_languages()
+    allowed_languages = get_allowed_babel_languages()
     babel_templates = re.findall(r"\{\{Babel((?:(?!\{\{Babel)[^{}])+)\}\}", content, re.IGNORECASE)
     language_claims = []
     if babel_templates:
@@ -77,8 +77,3 @@ def process_data_and_create_csv(sites):
             })
 
     return data
-
-
-def generate_csv_files():
-    process_data_and_create_csv(wikipedia_site_matrix.get_wikipedias())
-

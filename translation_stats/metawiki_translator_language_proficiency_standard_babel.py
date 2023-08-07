@@ -46,7 +46,6 @@ def format_language_proficiency(results):
     return output_rows
 
 
-@cached("metawiki_translator_language_proficiency_standard_babel")
 def match_usernames(babel_data):
     # Load the usernames and languages from babel_data
     metawiki_usernames = set()
@@ -74,7 +73,8 @@ def match_usernames(babel_data):
     return matched_rows
 
 
-def generate_csv_files():
+@cached("metawiki_translator_language_proficiency_standard_babel")
+def get_metawiki_proficiency():
     results = fetch_babel_data('metawiki')
     formatted_results = format_language_proficiency(results)
-    match_usernames(formatted_results)
+    return match_usernames(formatted_results)
