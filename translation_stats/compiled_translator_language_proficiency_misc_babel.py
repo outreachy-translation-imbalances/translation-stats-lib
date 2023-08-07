@@ -1,8 +1,7 @@
-import requests
 import re
 import json
 from .data_store import cached
-from .generate_usernames import get_userpage_titles
+from . import generate_usernames
 from . import wikipedia_site_matrix
 
 
@@ -20,13 +19,6 @@ def extract_language_codes(template_text):
         if last_element:
             languages.append(last_element)
     return languages
-
-
-def fetch_content(url, params):
-    response = requests.get(url, params=params)
-    if response.status_code == 200:
-        return response.text
-    return None
 
 
 def parse_babel_templates(content):
@@ -47,31 +39,24 @@ def parse_babel_templates(content):
     return language_claims
 
 
-def find_babel_languages(title, url):
-    modified_url = url + "/w/index.php"
-    params = {
-        "title": title,
-        "action": "raw"
-    }
-    content = fetch_content(modified_url, params)
-    if content:
-        language_claims = parse_babel_templates(content)
-        return title, language_claims
-    return title, []
+def _find_babel_languages(dbname, url, username):
+    userpage = generate_usernames.get_userpage(dbname=dbname, url=url, username=username)
+    language_claims = parse_babel_templates(userpage['wikitext'])
+    return username, language_claims
 
 
 @cached("translator_language_proficiency_misc_babel_new")
 def process_data_and_create_csv(sites):
     data = []
     for site in sites:
-        titles = get_userpage_titles(site["dbname"])
-        results = [find_babel_languages(title, site["url"]) for title in titles]
-        filtered_results = [(title, languages) for title, languages in results if languages]
+        users = generate_usernames.get_translators(wiki=site["dbname"])
+        results = [_find_babel_languages(site["dbname"], site["url"], user['username']) for user in users]
+        filtered_results = [(user, languages) for user, languages in results if languages]
 
-        for title, languages in filtered_results:
+        for user, languages in filtered_results:
             language_string = json.dumps(languages, separators=(',', ':'))
             data.append({
-                "username": title,
+                "username": user,
                 "language": language_string,
                 "wikipedia": site["dbname"]
             })

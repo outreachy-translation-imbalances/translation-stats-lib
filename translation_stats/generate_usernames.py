@@ -1,9 +1,11 @@
+import requests
 from .data_store import cached
 from .wiki_replica import query
 from .wikipedia_site_matrix import get_wikipedias
 
+
 @cached("translator_usernames/{wiki}_usernames")
-def fetch_usernames(*, wiki):
+def get_translators(*, wiki):
     results = query(
         wiki,
         """
@@ -23,8 +25,22 @@ def fetch_usernames(*, wiki):
     return results
 
 
-def get_userpage_titles(wiki):
-    return ["User:" + row['username'] for row in fetch_usernames(wiki=wiki)]
+@cached("translator_userpages/{dbname}_translators/{username}_userpage")
+def get_userpage(*, dbname, url, username):
+    response = requests.get(
+        f"{url}/w/index.php",
+        params={
+            "title": f"User:{username}",
+            "action": "raw"
+        })
+    if response.status_code != 200:
+        raise Exception(f"Couldn't fetch user page for {dbname} user {username}")
+
+    return [{
+        "wiki": dbname,
+        "username": username,
+        "wikitext": response.text
+    }]
 
 
 def generate_csv_files():
