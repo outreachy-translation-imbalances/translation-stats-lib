@@ -1,18 +1,9 @@
 import requests
-import csv
 import re
 import json
 from .data_store import cached
-
-
-def get_user_titles_with_babel_from_csv(csv_file):
-    titles = []
-    with open(csv_file, 'r', encoding='utf-8') as file:
-        reader = csv.reader(file)
-        next(reader)  # Skip header row if present
-        for row in reader:
-            titles.append("User:" + row[1])  # Assuming usernames are in the second column
-    return titles
+from . import generate_usernames
+from . import wikipedia_site_matrix
 
 
 def extract_language_codes(template_text):
@@ -71,48 +62,25 @@ def find_babel_languages(title, allowed_languages, url, dbname):
     return title, []
 
 
-@cached("/home/paws/translation-stats-data/translator_language_proficiency_user_template_new")
-def process_data_and_create_csv(allowed_languages, urls, dbnames):
-    csv_data = []
-    for url, dbname in zip(urls, dbnames):
-        csv_file = f"/home/paws/translation-stats-data/translator_usernames/{dbname}_usernames.csv"
+@cached("translator_language_proficiency_user_template_new")
+def process_data_and_create_csv(sites):
+    allowed_languages = wikipedia_site_matrix.get_allowed_babel_languages()
+    data = []
+    for site in sites:
+        titles = generate_usernames.get_userpage_titles(site["dbname"])
+        results = [find_babel_languages(title, allowed_languages, site["url"], site["dbname"]) for title in titles]
+        filtered_results = [(title, languages) for title, languages in results if languages]
 
-        try:
-            titles = get_user_titles_with_babel_from_csv(csv_file)
-            results = [find_babel_languages(title, allowed_languages, url, dbname) for title in titles]
-            filtered_results = [(title, languages) for title, languages in results if languages]
+        for title, languages in filtered_results:
+            language_string = json.dumps(languages, separators=(',', ':'))
+            data.append({
+                "username": title,
+                "language": language_string,
+                "wikipedia": site["dbname"]
+            })
 
-            for title, languages in filtered_results:
-                language_string = json.dumps(languages, separators=(',', ':'))
-                # writer.writerow([title, language_string])
-                csv_data.append({"username": title, "language": language_string, "wikipedia": dbname})
-
-        except FileNotFoundError:
-            print(f"Username file not found for {dbname}")
-    return csv_data
+    return data
 
 
 def generate_csv_files():
-    language_codes = []
-    dbnames = []
-    urls = []
-
-    language_data = "/home/paws/translation-stats-data/language_data.csv"
-
-    with open(language_data, 'r') as file:
-        reader = csv.DictReader(file)
-        for row in reader:
-            language_codes.append(row['Language Code'])
-            dbnames.append(row['DB Name'])
-            urls.append(row['URL'])
-
-    allowed_languages = []
-    for code in language_codes:
-        allowed_languages.append(code)
-        allowed_languages.append(f"{code}-N")
-        for i in range(6):
-            version = f"{code}-{i}"
-            allowed_languages.append(version)
-
-    process_data_and_create_csv(allowed_languages, urls, dbnames)
-
+    process_data_and_create_csv(wikipedia_site_matrix.get_wikipedias())

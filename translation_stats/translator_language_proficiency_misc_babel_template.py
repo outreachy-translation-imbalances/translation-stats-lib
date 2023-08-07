@@ -1,17 +1,10 @@
 import requests
-import csv
 import re
 import json
 
-
-def get_user_titles_with_babel_from_csv(csv_file):
-    titles = []
-    with open(csv_file, 'r', encoding='utf-8') as file:
-        reader = csv.reader(file)
-        next(reader)  # Skip header row if present
-        for row in reader:
-            titles.append("User:" + row[1])  # Assuming usernames are in the second column
-    return titles
+from .data_store import cached
+from .generate_usernames import get_userpage_titles
+from . import wikipedia_site_matrix
 
 
 def extract_language_codes(template_text):
@@ -37,7 +30,8 @@ def fetch_content(url, params):
     return None
 
 
-def parse_babel_templates(content, allowed_languages, dbname):
+def parse_babel_templates(content):
+    allowed_languages = wikipedia_site_matrix.get_allowed_babel_languages()
     babel_templates = re.findall(r"\{\{Babel((?:(?!\{\{Babel)[^{}])+)\}\}", content, re.IGNORECASE)
     language_claims = []
     if babel_templates:
@@ -54,7 +48,7 @@ def parse_babel_templates(content, allowed_languages, dbname):
     return language_claims
 
 
-def find_babel_languages(title, allowed_languages, url, dbname):
+def find_babel_languages(title, url):
     modified_url = url + "/w/index.php"
     params = {
         "title": title,
@@ -62,54 +56,28 @@ def find_babel_languages(title, allowed_languages, url, dbname):
     }
     content = fetch_content(modified_url, params)
     if content:
-        language_claims = parse_babel_templates(content, allowed_languages, dbname)
+        language_claims = parse_babel_templates(content)
         return title, language_claims
     return title, []
 
 
-def create_user_language_csv(csv_file, output_file, allowed_languages, url, dbname):
-    titles = get_user_titles_with_babel_from_csv(csv_file)
-    results = [find_babel_languages(title, allowed_languages, url, dbname) for title in titles]
+@cached("translator_language_proficiency_misc_babel/{dbname}_translator_proficiency_misc_babel")
+def create_user_language_csv(*, dbname, url):
+    titles = get_userpage_titles(dbname)
+    results = [find_babel_languages(title, url) for title in titles]
     filtered_results = [(title, languages) for title, languages in results if languages]
 
-    with open(output_file, 'w', encoding='utf-8', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerow(["username", "language"])
+    data = []
+    for title, languages in filtered_results:
+        language_string = json.dumps(languages, separators=(',', ':'))
+        data.append({
+            "user": title,
+            "languages": language_string
+        })
 
-        for title, languages in filtered_results:
-            language_string = json.dumps(languages, separators=(',', ':'))
-            writer.writerow([title, language_string])
-
-    print("CSV file created successfully:", output_file)
+    return data
 
 
 def generate_csv_files():
-    language_codes = []
-    dbnames = []
-    urls = []
-
-    language_data = "/home/paws/translation-stats-data/language_data.csv"
-
-    with open(language_data, 'r') as file:
-        reader = csv.DictReader(file)
-        for row in reader:
-            language_codes.append(row['Language Code'])
-            dbnames.append(row['DB Name'])
-            urls.append(row['URL'])
-
-    allowed_languages = []
-    for code in language_codes:
-        allowed_languages.append(code)
-        allowed_languages.append(f"{code}-N")
-        for i in range(6):
-            version = f"{code}-{i}"
-            allowed_languages.append(version)
-
-    for url, language_code, dbname in zip(urls, language_codes, dbnames):
-        csv_file = f"/home/paws/translation-stats-data/translator_usernames/{dbname}_usernames.csv"
-        output_file = f"/home/paws/translation-stats-data/translator_language_proficiency_misc_babel/{dbname}_translator_proficiency_misc_babel.csv"
-
-        try:
-            create_user_language_csv(csv_file, output_file, allowed_languages, url, dbname)
-        except FileNotFoundError:
-            print(f"Username file not found for {dbname}")
+    for site in wikipedia_site_matrix.get_wikipedias():
+        create_user_language_csv(dbname=site['dbname'], url=site['url'])

@@ -1,6 +1,6 @@
-import csv
 from .data_store import cached
 from .wiki_replica import query
+from . import wikipedia_site_matrix
 
 
 def fetch_babel_data(database):
@@ -23,17 +23,19 @@ def fetch_babel_data(database):
     return results
 
 
-@cached("/home/paws/translation-stats-data/translator_language_proficiency_standard_babel_new")
-def format_language_proficiency(dbnames, allowed_languages):
+
+@cached("translator_language_proficiency_standard_babel_new")
+def format_language_proficiency(dbnames):
+    allowed_languages = wikipedia_site_matrix.get_allowed_babel_languages()
     all_data = []
 
     for database in dbnames:
         results = fetch_babel_data(database)
         merged_rows = {}
-        for result in results:
-            username = result[0].decode('utf-8')
-            language = result[1].decode('utf-8')
-            proficiency = result[2].decode('utf-8')
+        for row in results:
+            username = row['username']
+            language = row['language_used']
+            proficiency = row['language_level']
             if language in allowed_languages:
                 if username not in merged_rows:
                     merged_rows[username] = [(language, proficiency)]
@@ -44,22 +46,21 @@ def format_language_proficiency(dbnames, allowed_languages):
         for username, language in merged_rows.items():
             formatted_username = f"{username}"
             formatted_languages = ", ".join([f"{lang}-{prof}" for lang, prof in language])
-            output_rows.append({'Username': formatted_username, 'Language-Proficiency': formatted_languages})
-            all_data.append({'Username': formatted_username, 'Language-Proficiency': formatted_languages, 'Wikipedia Version': database})
+            output_rows.append({
+                'username': formatted_username,
+                'language_proficiency': formatted_languages
+            })
+            all_data.append({
+                'username': formatted_username,
+                'language_proficiency': formatted_languages,
+                'wiki': database
+            })
 
     return all_data
 
 
 def generate_csv_files():
-    # Read the database names from the language_data.csv file
-    dbnames = []
-    allowed_languages = []
-    with open('/home/paws/translation-stats-data/language_data.csv', 'r', encoding='utf-8') as file:
-        reader = csv.DictReader(file)
-        for row in reader:
-            dbnames.append(row['DB Name'])
-            allowed_languages.append(row['Language Code'])
+    sites = wikipedia_site_matrix.get_wikipedias()
+    format_language_proficiency([site['dbname'] for site in sites])
 
-    all_data = format_language_proficiency(dbnames, allowed_languages)
-
-    print(f"Combined CSV file saved")
+    print("Combined CSV file saved")
