@@ -3,7 +3,7 @@ Extract language proficiencies from the metawiki global user database.
 """
 from .data_store import cached
 from .wiki_replica import query
-from .generate_usernames import fetch_usernames
+from .translators import fetch_usernames
 from . import wikipedia_site_matrix
 
 
@@ -21,7 +21,6 @@ def fetch_babel_data(database):
         ORDER BY a.actor_name
         """
     )
-
 
 
 def format_language_proficiency(results):
@@ -76,7 +75,7 @@ def match_usernames(babel_data):
     return matched_rows
 
 
-@cached("metawiki_translator_language_proficiency_standard_babel")
+@cached("language_proficiency_global_babel")
 def get_metawiki_proficiency():
     results = fetch_babel_data('metawiki')
     formatted_results = format_language_proficiency(results)

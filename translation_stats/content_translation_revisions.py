@@ -5,7 +5,7 @@ from .data_store import cached
 from .wiki_replica import query
 
 
-@cached("revision_table/{dbname}_revision_table")
+@cached("content_translation_revisions/{dbname}_revisions")
 def process_database(*, dbname):
     results = query(
         dbname,

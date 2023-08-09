@@ -1,11 +1,11 @@
 """
-Find and parse Template:Babel usages which intentionally avoid the Babel extension.
+Find and parse Template:User usages which include potential language proficiency levels.
 """
 import requests
 import re
 import json
 from .data_store import cached
-from .generate_usernames import get_userpage_titles
+from . import translators
 from .wikipedia_site_matrix import get_allowed_babel_language_proficiencies
 
 
@@ -32,9 +32,11 @@ def fetch_content(url, params):
     return None
 
 
-def parse_babel_templates(content):
-    allowed_language_proficiencies = get_allowed_babel_language_proficiencies()
-    babel_templates = re.findall(r"\{\{Babel((?:(?!\{\{Babel)[^{}])+)\}\}", content, re.IGNORECASE)
+def parse_babel_templates(content, allowed_languages, dbname):
+    if dbname == "frwiki":
+        babel_templates = re.findall(r"\{\{Utilisateur(?![^:}]*?:)(?:[^}]*?)[^\w}](.*?)\}\}", content, re.IGNORECASE)
+    else:
+        babel_templates = re.findall(r"\{\{User(?![^:}]*?:)(?:[^}]*?)[^\w}](.*?)\}\}", content, re.IGNORECASE)
     language_claims = []
     if babel_templates:
         for babel_template in babel_templates:
@@ -44,13 +46,13 @@ def parse_babel_templates(content):
             for lang in user_languages:
                 lang = lang.strip()
                 lang = lang.rstrip('\n')
-                if lang in allowed_language_proficiencies:
+                if lang in allowed_languages:
                     valid_user_languages.add(lang)
             language_claims.extend(valid_user_languages)
     return language_claims
 
 
-def find_babel_languages(title, url):
+def find_babel_languages(title, allowed_languages, url, dbname):
     modified_url = url + "/w/index.php"
     params = {
         "title": title,
@@ -58,17 +60,18 @@ def find_babel_languages(title, url):
     }
     content = fetch_content(modified_url, params)
     if content:
-        language_claims = parse_babel_templates(content)
+        language_claims = parse_babel_templates(content, allowed_languages, dbname)
         return title, language_claims
     return title, []
 
 
-@cached("translator_language_proficiency_misc_babel_new")
+@cached("language_proficiency_user_template")
 def process_data_and_create_csv(sites):
+    allowed_languages = get_allowed_babel_language_proficiencies()
     data = []
     for site in sites:
-        titles = get_userpage_titles(site["dbname"])
-        results = [find_babel_languages(title, site["url"]) for title in titles]
+        titles = translators.get_userpage_titles(site["dbname"])
+        results = [find_babel_languages(title, allowed_languages, site["url"], site["dbname"]) for title in titles]
         filtered_results = [(title, languages) for title, languages in results if languages]
 
         for title, languages in filtered_results:

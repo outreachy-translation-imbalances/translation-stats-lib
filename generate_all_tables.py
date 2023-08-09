@@ -8,11 +8,11 @@ the configuration directly for now.
 import os.path
 
 from translation_stats import data_store
-from translation_stats import compiled_translator_language_proficiency_misc_babel
-from translation_stats import compiled_translator_language_proficiency_standard_babel
-from translation_stats import compiled_translator_language_proficiency_user_template
-from translation_stats import metawiki_translator_language_proficiency_standard_babel
-from translation_stats import revision_table
+from translation_stats import language_proficiency_babel_template
+from translation_stats import language_proficiency_babel_extension
+from translation_stats import language_proficiency_user_template
+from translation_stats import language_proficiency_global_babel
+from translation_stats import content_translation_revisions
 from translation_stats.wikipedia_site_matrix import get_wikipedias
 
 
@@ -25,9 +25,9 @@ if __name__ == "__main__":
 
     sites = get_wikipedias()
     dbnames = [site['dbname'] for site in sites]
-    compiled_translator_language_proficiency_misc_babel.process_data_and_create_csv(sites)
-    compiled_translator_language_proficiency_standard_babel.format_language_proficiency(dbnames)
-    compiled_translator_language_proficiency_user_template.process_data_and_create_csv(sites)
-    metawiki_translator_language_proficiency_standard_babel.get_metawiki_proficiency()
+    language_proficiency_babel_template.process_data_and_create_csv(sites)
+    language_proficiency_babel_extension.format_language_proficiency(dbnames)
+    language_proficiency_user_template.process_data_and_create_csv(sites)
+    language_proficiency_global_babel.get_metawiki_proficiency()
     for site in sites:
-        revision_table.process_database(dbname=site['dbname'])
+        content_translation_revisions.process_database(dbname=site['dbname'])

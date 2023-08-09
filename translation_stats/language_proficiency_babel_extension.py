@@ -8,7 +8,7 @@ from .wikipedia_site_matrix import get_languages
 
 
 def fetch_babel_data(database):
-    # TODO: Reuse the results of revision_table.
+    # TODO: Reuse the results of content_translation_revisions.
     return query(
         database,
         """
@@ -27,7 +27,7 @@ def fetch_babel_data(database):
     )
 
 
-@cached("translator_language_proficiency_standard_babel_new")
+@cached("language_proficiency_babel_extension")
 def format_language_proficiency(dbnames):
     allowed_languages = get_languages()
     all_data = []
