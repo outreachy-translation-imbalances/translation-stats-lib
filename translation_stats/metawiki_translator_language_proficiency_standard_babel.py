@@ -1,3 +1,6 @@
+"""
+Extract language proficiencies from the metawiki global user database.
+"""
 from .data_store import cached
 from .wiki_replica import query
 from .generate_usernames import fetch_usernames

@@ -1,3 +1,6 @@
+"""
+Find and parse Template:User usages which include potential language proficiency levels.
+"""
 import requests
 import re
 import json

@@ -1,3 +1,6 @@
+"""
+Find all users who have contributed a translation using the Content Translation extension.
+"""
 from .data_store import cached
 from .wiki_replica import query
 from .wikipedia_site_matrix import get_wikipedias

@@ -1,3 +1,6 @@
+"""
+Find and parse Template:Babel usages which intentionally avoid the Babel extension.
+"""
 import requests
 import re
 import json

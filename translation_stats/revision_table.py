@@ -1,3 +1,6 @@
+"""
+Extract revision metadata for changes tagged with "contenttranslation".
+"""
 from .data_store import cached
 from .wiki_replica import query
 
