@@ -4,7 +4,7 @@ from .wikipedia_site_matrix import get_languages
 
 
 def fetch_babel_data(database):
-    results = query(
+    return query(
         database,
         """
         SELECT
@@ -20,7 +20,6 @@ def fetch_babel_data(database):
         ORDER BY a.actor_name
         """
     )
-    return results
 
 
 @cached("translator_language_proficiency_standard_babel_new")
@@ -41,14 +40,9 @@ def format_language_proficiency(dbnames):
                 else:
                     merged_rows[username].append((language, proficiency))
 
-        output_rows = []
         for username, language in merged_rows.items():
             formatted_username = f"{username}"
             formatted_languages = ", ".join([f"{lang}-{prof}" for lang, prof in language])
-            output_rows.append({
-                'username': formatted_username,
-                'language_proficiency': formatted_languages
-            })
             all_data.append({
                 'username': formatted_username,
                 'language_proficiency': formatted_languages,
