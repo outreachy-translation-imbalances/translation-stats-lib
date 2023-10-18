@@ -49,11 +49,14 @@ def get_wikipedias():
     return sites
 
 
-def get_allowed_babel_languages():
+def get_languages():
+    return [site["language"] for site in get_wikipedias()]
+
+
+def get_allowed_babel_language_proficiencies():
     """Build a list of all possible Babel proficiency levels for known Wikipedia langauges."""
-    languages = [site["language"] for site in get_wikipedias()]
     allowed_languages = []
-    for code in languages:
+    for code in get_languages():
         allowed_languages.append(code)
         allowed_languages.append(f"{code}-N")
         for i in range(6):
