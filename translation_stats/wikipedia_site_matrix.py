@@ -53,6 +53,7 @@ def get_languages():
     return [site["language"] for site in get_wikipedias()]
 
 
+@cached("allowed_language_proficiencies")
 def get_allowed_babel_language_proficiencies():
     """Build a list of all possible Babel proficiency levels for known Wikipedia langauges."""
     allowed_languages = []
