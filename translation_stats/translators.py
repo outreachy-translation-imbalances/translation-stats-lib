@@ -28,8 +28,3 @@ def fetch_usernames(*, wiki):
 
 def get_userpage_titles(wiki):
     return ["User:" + row['username'] for row in fetch_usernames(wiki=wiki)]
-
-
-def generate_csv_files():
-    for database_name in get_wikipedias():
-        fetch_usernames(wiki=database_name)
