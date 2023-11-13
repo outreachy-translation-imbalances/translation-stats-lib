@@ -16,12 +16,10 @@ from translation_stats import content_translation_revisions
 from translation_stats.wikipedia_site_matrix import get_wikipedias
 
 
-data_path = os.path.expanduser("~/translation-stats-data")
-
-
 if __name__ == "__main__":
-    default_store = data_store.DataStore(output_path=data_path)
-    data_store.configure_global_store(default_store)
+    data_path = os.path.expanduser("~/translation-stats-data")
+    default_store = data_store.FileStore(path=data_path)
+    data_store.configure_global_stores(default_store)
 
     sites = get_wikipedias()
     dbnames = [site['dbname'] for site in sites]

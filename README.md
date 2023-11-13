@@ -25,7 +25,7 @@ repository:
 
 ```python
 import data_store
-data_store.configure_global_store(
+data_store.configure_global_stores(
     data_store.DataStore(output_path="/home/USER/translation-stats-data")
 )
 ```

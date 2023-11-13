@@ -11,8 +11,8 @@ remote data to the local directory.
 
 >>> def notebook_url(table):
 ...     return dict(url="https://public-paws.wmcloud.org/User:Adamw/Translation%20Imbalances/" + table + ".csv")
->>> store = data_store.DataStore(remote_sources=[notebook_url], output_path="/tmp")
->>> configure_global_store(store)
+>>> store = data_store.DataStore(read_only_stores=[notebook_url], output_path="/tmp")
+>>> configure_global_stores(store)
 
 >>> @cached("content_translation_stats")
 ... def demo():
@@ -28,6 +28,9 @@ import os
 import os.path
 import requests
 from typing import Callable, List
+
+
+_global_store = None
 
 
 def _filesystem_path(root, table):
@@ -51,29 +54,36 @@ def _write_csv(path, data: List[dict]):
         print("No data to write to the CSV file.")
 
 
+class RemoteStore:
+    def __init__(
+        self,
+        calculate_url: str
+    ):
+        self.calculate_url = calculate_url
+
+    def read(self, table):
+        result = requests.get(**self.calculate_url(table))
+        if result.status_code != 200:
+            return None
+        reader = csv.DictReader(result.text.splitlines())
+        return [row for row in reader]
+
+
 class DataStore:
     def __init__(
         self,
-        local_sources: List[str] = [],
-        remote_sources: List[Callable[[str], dict]] = [],
-        output_path=".",
+        path: str
     ):
-        # List of local paths containing data.  Will implicitly include the
-        # output_path as the first place to check.
-        self.local_sources = local_sources
-        self.local_sources.insert(0, output_path)
-        # List of functions which calculate a request from a given table.
-        self.remote_sources = remote_sources
-        self.output_path = output_path
+        self.path = path
 
     def read(self, table) -> List[dict]:
-        for source in self.local_sources:
+        for source in self.stores:
             try:
                 return _read_csv(_filesystem_path(source, table))
             except FileNotFoundError:
                 pass
 
-        for source in self.remote_sources:
+        for source in self.read_only_stores:
             result = requests.get(**source(table))
             if result.status_code != 200:
                 continue
@@ -92,9 +102,9 @@ class DataStore:
         _write_csv(path, data)
 
 
-def cached(table):
+def cached(table, store=None):
     """
-    Decorator memoizes results to the filesystem.
+    Decorator memoizes results to the filesystem
 
     Without parameters:
         @cached("table_name")
@@ -103,20 +113,24 @@ def cached(table):
     With parameters:
         @cached("{wiki}_table_name")
         def calculate_expensive(*, wiki): ...
+
+    Passing a specific store makes it easy to fine-tune or test:
+        @cached("table_name", store=MemoryStore())
     """
 
     def decorated(func):
         @wraps(func)
         def wrapped_calculation(*args, **kwargs):
+            store = store or _global_store
             filename = table.format(*args, **kwargs)
 
             try:
-                return _global_store.read(filename)
+                return store.read(filename)
 
             except FileNotFoundError:
                 data = func(*args, **kwargs)
 
-                _global_store.write(filename, data)
+                store.write(filename, data)
                 return data
 
         return wrapped_calculation
@@ -124,9 +138,25 @@ def cached(table):
     return decorated
 
 
-_global_store = DataStore()
+class MultipleStore:
+    def __init__(self, stores):
+        self.stores = stores
+
+    def read(self, table):
+        for source in self.stores:
+            data = source.read(table)
+            if data != None:
+                return data
+        return None
+
+    def write(self, table, data):
+        for source in self.stores:
+            if hasattr(source, "write"):
+                source.write(table, data)
+                return
+        raise Exception("No store can save to {table}")
 
 
-def configure_global_store(new_store: DataStore):
+def configure_global_stores(new_store: DataStore):
     global _global_store
     _global_store = new_store
